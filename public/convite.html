@@ -1046,7 +1046,7 @@
     /* ==========================================================
        3. TEXTURAS PROCEDURAIS CANVAS HD
        ========================================================== */
-    // Frente do Envelope Kraft (Origem: Pederneiras - SP)
+    // Frente do Envelope Kraft — lisa
     function createCleanFrontTexture() {
       const canvas = document.createElement('canvas');
       canvas.width = 1024;
@@ -1066,142 +1066,6 @@
         const ry = Math.random() * 680;
         ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
       }
-
-      // Borda Airmail
-      const stripeW = 28;
-      for (let i = -2; i < 40; i++) {
-        ctx.fillStyle = i % 2 === 0 ? '#a82c20' : '#143852';
-        ctx.beginPath();
-        ctx.moveTo(i * stripeW, 0);
-        ctx.lineTo((i + 1) * stripeW, 0);
-        ctx.lineTo((i + 1) * stripeW - 14, 18);
-        ctx.lineTo(i * stripeW - 14, 18);
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.moveTo(i * stripeW, 680);
-        ctx.lineTo((i + 1) * stripeW, 680);
-        ctx.lineTo((i + 1) * stripeW + 14, 662);
-        ctx.lineTo(i * stripeW + 14, 662);
-        ctx.fill();
-      }
-
-      // Selo Postal
-      ctx.save();
-      ctx.translate(850, 150);
-      ctx.rotate(0.05);
-      ctx.shadowColor = 'rgba(0,0,0,0.25)';
-      ctx.shadowBlur = 8;
-      ctx.shadowOffsetY = 3;
-      ctx.fillStyle = '#f8f4ea';
-      ctx.fillRect(-85, -110, 170, 220);
-      ctx.shadowColor = 'transparent';
-
-      ctx.strokeStyle = '#b82b1c';
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(-76, -101, 152, 202);
-
-      const stampGrad = ctx.createLinearGradient(0, -90, 0, 40);
-      stampGrad.addColorStop(0, '#c75338');
-      stampGrad.addColorStop(0.6, '#f39c58');
-      stampGrad.addColorStop(1, '#1a435d');
-      ctx.fillStyle = stampGrad;
-      ctx.fillRect(-70, -95, 140, 130);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(-10, -40);
-      ctx.lineTo(15, -40);
-      ctx.lineTo(5, -75);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#1c120a';
-      ctx.fillRect(-15, -38, 35, 6);
-
-      ctx.fillStyle = '#b82b1c';
-      ctx.font = '900 16px "Cinzel", serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('1D • 2026', 0, 60);
-      ctx.font = 'bold 22px "Outfit", sans-serif';
-      ctx.fillText('JULIA 25', 0, 84);
-      ctx.font = 'bold 12px "Courier Prime", monospace';
-      ctx.fillStyle = '#143852';
-      ctx.fillText('JULIA 25', 0, 100);
-      ctx.restore();
-
-      // Carimbo
-      ctx.save();
-      ctx.translate(720, 140);
-      ctx.rotate(-0.06);
-      ctx.strokeStyle = 'rgba(20, 40, 60, 0.7)';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, 52, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0, 0, 46, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(20, 40, 60, 0.85)';
-      ctx.font = 'bold 13px "Courier Prime", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('CORREIOS • SP', 0, -18);
-      ctx.font = '900 16px "Outfit", sans-serif';
-      ctx.fillText('26.NOV.2026', 0, 4);
-      ctx.font = 'bold 11px "Courier Prime", monospace';
-      ctx.fillText('1D ➔ PIZZA HUT', 0, 22);
-
-      for (let y = -25; y <= 25; y += 12) {
-        ctx.beginPath();
-        ctx.moveTo(55, y);
-        ctx.bezierCurveTo(90, y - 8, 120, y + 8, 160, y);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // Carimbo Prioritário
-      ctx.save();
-      ctx.translate(140, 120);
-      ctx.rotate(-0.08);
-      ctx.strokeStyle = 'rgba(184, 43, 28, 0.75)';
-      ctx.lineWidth = 3.5;
-      ctx.strokeRect(-70, -25, 140, 50);
-      ctx.fillStyle = 'rgba(184, 43, 28, 0.85)';
-      ctx.font = '900 16px "Outfit", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PRIORITÁRIO', 0, -3);
-      ctx.font = 'bold 11px "Courier Prime", monospace';
-      ctx.fillText('FIRST CLASS', 0, 14);
-      ctx.restore();
-
-      // Destinatário
-      ctx.fillStyle = '#091b2b';
-      ctx.font = '900 38px "Cinzel", serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('CONVOCAÇÃO OFICIAL', 90, 440);
-
-      ctx.strokeStyle = 'rgba(18, 52, 77, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(90, 455);
-      ctx.lineTo(540, 455);
-      ctx.stroke();
-
-      ctx.font = 'italic 28px "Playfair Display", serif';
-      ctx.fillStyle = '#1c2834';
-      ctx.fillText('Aos Cuidados da Julia', 90, 500);
-
-      ctx.font = 'bold 22px "Outfit", sans-serif';
-      ctx.fillStyle = '#a82c20';
-      ctx.fillText('Origem: Casa', 90, 545);
-
-      ctx.font = 'bold 22px "Outfit", sans-serif';
-      ctx.fillStyle = '#143852';
-      ctx.fillText('Destino: Pizza Hut • Deodoro, 531', 90, 580);
-
-      ctx.font = '16px "Courier Prime", monospace';
-      ctx.fillStyle = '#66533f';
-      ctx.fillText('Embarque: 26/11/2026 às 19:00', 90, 615);
 
       return new THREE.CanvasTexture(canvas);
     }
@@ -1225,6 +1089,24 @@
         const rx = Math.random() * 1024;
         const ry = Math.random() * 680;
         ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
+      }
+
+      const stripeW = 28;
+      for (let i = -2; i < 40; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#a82c20' : '#143852';
+        ctx.beginPath();
+        ctx.moveTo(i * stripeW, 0);
+        ctx.lineTo((i + 1) * stripeW, 0);
+        ctx.lineTo((i + 1) * stripeW - 14, 18);
+        ctx.lineTo(i * stripeW - 14, 18);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(i * stripeW, 680);
+        ctx.lineTo((i + 1) * stripeW, 680);
+        ctx.lineTo((i + 1) * stripeW + 14, 662);
+        ctx.lineTo(i * stripeW + 14, 662);
+        ctx.fill();
       }
 
       ctx.save();
