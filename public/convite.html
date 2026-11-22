@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Backstage Pass VIP • Julia 25 • Where We Are Tour</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <!-- Three.js (r128), Anime.js (3.2.2) & Canvas Confetti -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    /* ==========================================================
+       1. ESTILOS DO BOARDING PASS VIP & CENÁRIO DO GUARUJÁ
+       ========================================================== */
+    :root {
+      --bg-ocean: #071724;
+      --ticket-bg: #fdfbf7;
+      --ticket-sub: #f5eedf;
+      --ticket-border: #d5c3ab;
+      
+      --navy-deep: #091b2b;
+      --navy-primary: #12344d;
+      --gold-accent: #c49a45;
+      --gold-light: #dfb96c;
+      --red-alert: #a8281a;
+      --green-confirmed: #15803d;
+      
+      --font-display: 'Cinzel', serif;
+      --font-sans: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'Space Mono', 'Courier Prime', monospace;
+      
+      --shadow-ticket: 0 25px 65px rgba(0, 0, 0, 0.65), 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden !important;
+      font-family: var(--font-sans);
+      background-color: #071724;
+      color: var(--navy-deep);
+      position: relative;
+    }
+
+    /* CAMADA DE FOTOGRAFIA DO GUARUJÁ NO BACKGROUND */
+    .scenic-bg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(ellipse at 20% 0%, #ff2d6a55, transparent 45%),
+        radial-gradient(ellipse at 90% 10%, #39d0c555, transparent 40%),
+        #070b16;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      outline: none;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+
+    /* Botão Flutuante Mobile */
+    .ux-hint-overlay {
+      position: absolute;
+      bottom: calc(clamp(16px, 4vh, 32px) + env(safe-area-inset-bottom, 0px));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+      transition: opacity 0.35s, transform 0.35s;
+      width: 90%;
+      max-width: 320px;
+    }
+
+    .ux-pill-badge {
+      background: rgba(9, 27, 43, 0.95);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(223, 185, 108, 0.85);
+      color: #fdfbf7;
+      padding: clamp(10px, 2vh, 13px) clamp(18px, 5vw, 26px);
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-size: clamp(0.78rem, 3.2vw, 0.9rem);
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.7), 0 0 16px rgba(223, 185, 108, 0.3);
+      animation: floatBadgeMobile 2.2s ease-in-out infinite alternate;
+      pointer-events: auto;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .ux-pill-badge:active {
+      transform: scale(0.96);
+      background: rgba(18, 52, 77, 0.98);
+    }
+    @keyframes floatBadgeMobile {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-5px); border-color: rgba(223, 185, 108, 1); }
+    }
+
+    /* ==========================================================
+       2. ESTRUTURA DO BOARDING PASS VIP (ZERO SCROLLBAR JITTER)
+       ========================================================== */
+    .dashboard-viewport {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: calc(clamp(8px, 2vh, 16px) + env(safe-area-inset-top, 0px)) clamp(10px, 3.5vw, 18px) calc(clamp(8px, 2vh, 16px) + env(safe-area-inset-bottom, 0px));
+      pointer-events: none;
+      overflow: hidden !important;
+    }
+
+    .boarding-pass-card {
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      max-height: 90dvh;
+      overflow-y: auto;
+      overflow-x: hidden !important;
+      background: var(--ticket-bg);
+      background-image: linear-gradient(180deg, #fefdfa 0%, #f7f1e6 100%);
+      border-radius: clamp(16px, 4vw, 22px);
+      border: 1.5px solid var(--ticket-border);
+      box-shadow: var(--shadow-ticket);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      opacity: 0;
+      transform: translateY(35px) scale(0.92);
+      pointer-events: none;
+      transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      
+      /* Oculta barras de scroll completamente mantendo a rolagem fluida por toque */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .boarding-pass-card::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .boarding-pass-card.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    /* Topo do Ticket */
+    .ticket-header-strip {
+      background: var(--navy-deep);
+      color: #ffffff;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top-left-radius: clamp(14px, 3.8vw, 20px);
+      border-top-right-radius: clamp(14px, 3.8vw, 20px);
+      border-bottom: 2px solid var(--gold-accent);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .ticket-brand {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: clamp(0.72rem, 2.6vw, 0.82rem);
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--gold-light);
+      text-transform: uppercase;
+    }
+    .brand-sub {
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      color: #a4b8c8;
+      letter-spacing: 0.8px;
+    }
+
+    .ticket-class-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      border: 1px solid var(--gold-accent);
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(196, 154, 69, 0.12);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Corpo Principal do Ticket */
+    .ticket-body {
+      padding: clamp(12px, 2.2vh, 18px) clamp(14px, 3.6vw, 20px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.8vh, 14px);
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden !important;
+    }
+
+    /* Rota: PEDERNEIRAS -> GUARUJÁ */
+    .route-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1e8d9;
+      border: 1px solid #dfd2be;
+      border-radius: 12px;
+      padding: 10px 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .route-point {
+      display: flex;
+      flex-direction: column;
+    }
+    .route-code {
+      font-family: var(--font-sans);
+      font-size: clamp(1.35rem, 5.2vw, 1.75rem);
+      font-weight: 900;
+      color: var(--navy-deep);
+      line-height: 1;
+      letter-spacing: 0.5px;
+    }
+    .route-city {
+      font-family: var(--font-mono);
+      font-size: clamp(0.58rem, 2.1vw, 0.66rem);
+      font-weight: 700;
+      color: #7a6650;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .route-arrow-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .route-line {
+      width: clamp(45px, 14vw, 75px);
+      height: 2px;
+      background: var(--gold-accent);
+      position: relative;
+    }
+    .route-line::after {
+      content: '▶';
+      position: absolute;
+      right: -6px;
+      top: -6px;
+      font-size: 0.6rem;
+      color: var(--gold-accent);
+    }
+    .flight-num {
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      color: var(--navy-primary);
+    }
+
+    /* Grid de Informações do Passageiro */
+    .passenger-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 8px;
+      border-bottom: 1px dashed #d5c3ab;
+      padding-bottom: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .data-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .data-label {
+      font-family: var(--font-mono);
+      font-size: 0.54rem;
+      font-weight: 700;
+      color: #8c765c;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .data-value {
+      font-family: var(--font-sans);
+      font-size: clamp(0.78rem, 2.8vw, 0.88rem);
+      font-weight: 800;
+      color: var(--navy-deep);
+      line-height: 1.2;
+    }
+    .data-value.highlight {
+      color: var(--green-confirmed);
+    }
+
+    /* Telegrama de Bordo */
+    .dispatch-strip {
+      background: #efe4d2;
+      border-left: 3.5px solid var(--navy-primary);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: clamp(0.68rem, 2.4vw, 0.74rem);
+      color: var(--navy-deep);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .dispatch-tag {
+      font-weight: 700;
+      font-size: 0.58rem;
+      letter-spacing: 0.8px;
+      color: var(--navy-primary);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .dispatch-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: 600;
+    }
+
+    /* Cronômetro Flip Moderno */
+    .countdown-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .countdown-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-tag {
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--navy-deep);
+      text-transform: uppercase;
+    }
+
+    .countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(5px, 1.8vw, 8px);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .timer-card {
+      background: #ffffff;
+      border: 1.5px solid #dcd0bc;
+      border-radius: 10px;
+      padding: clamp(7px, 1.4vh, 12px) 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s;
+      box-sizing: border-box;
+    }
+    .timer-card:active {
+      transform: scale(0.93);
+    }
+    .timer-card::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 1px;
+      background: rgba(0, 0, 0, 0.06);
+    }
+
+    .timer-digits {
+      font-family: var(--font-sans);
+      font-size: clamp(1.5rem, 6.6vw, 2.3rem);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--navy-deep);
+      letter-spacing: -0.5px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .timer-label {
+      font-family: var(--font-display);
+      font-size: clamp(0.54rem, 2vw, 0.64rem);
+      font-weight: 700;
+      color: #8c765c;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-top: 3px;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Divisor com Picote Interno */
+    .ticket-tear-line {
+      position: relative;
+      width: 100%;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .tear-dashed {
+      width: 100%;
+      height: 1px;
+      border-top: 2px dashed #d0beaa;
+    }
+
+    /* Seção de Ações / Serviços de Bordo */
+    .ticket-stub {
+      padding: 0 clamp(14px, 3.6vw, 20px) clamp(14px, 2.2vh, 18px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden !important;
+    }
+
+    .interactive-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(6px, 1.8vw, 9px);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .editorial-btn {
+      background: #ffffff;
+      border: 1.5px solid #dcd0bc;
+      border-radius: 8px;
+      padding: clamp(7px, 1.2vh, 10px) 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+      transition: transform 0.15s, background 0.15s;
+      box-sizing: border-box;
+    }
+    .editorial-btn:active {
+      transform: scale(0.93);
+      background: #fbf7f0;
+    }
+
+    .btn-title {
+      font-family: var(--font-display);
+      font-size: clamp(0.64rem, 2.2vw, 0.72rem);
+      font-weight: 800;
+      color: var(--navy-deep);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .btn-sub {
+      font-family: var(--font-mono);
+      font-size: clamp(0.52rem, 1.7vw, 0.58rem);
+      color: #8c765c;
+      margin-top: 1px;
+    }
+
+    /* Botão de Decolagem Imediata */
+    .btn-panic-coastal {
+      width: 100%;
+      background: linear-gradient(135deg, #a8281a 0%, #c43828 100%);
+      border: 1.5px solid #ffffff;
+      border-radius: 10px;
+      padding: clamp(9px, 1.5vh, 12px) 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: clamp(0.78rem, 3.1vw, 0.9rem);
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #ffffff;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 6px 18px rgba(168, 40, 26, 0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+      transition: transform 0.15s;
+      box-sizing: border-box;
+    }
+    .btn-panic-coastal:active {
+      transform: scale(0.96);
+    }
+
+    /* Rodapé Limpo do Ticket */
+    .ticket-footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px dashed #d5c3ab;
+      width: 100%;
+      box-sizing: border-box;
+      gap: 12px;
+    }
+
+    .footer-route-stamp {
+      font-family: var(--font-mono);
+      font-size: clamp(0.62rem, 2.3vw, 0.72rem);
+      font-weight: 700;
+      color: #8a745b;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .control-pill-btn {
+      background: #ebdcc9;
+      border: 1px solid #d0bea6;
+      color: var(--navy-deep);
+      border-radius: 999px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.62rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: transform 0.15s;
+    }
+    .control-pill-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* Modal Interativo */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 21, 33, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #fbf9f4;
+      border: 2px solid var(--ticket-border);
+      border-radius: 16px;
+      padding: clamp(14px, 2.5vh, 20px);
+      width: 100%;
+      max-width: 420px;
+      max-height: 88vh;
+      max-height: 88dvh;
+      overflow-y: auto;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      box-sizing: border-box;
+    }
+
+    .modal-stamp-corner {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      color: var(--red-alert);
+      border: 1px solid var(--red-alert);
+      padding: 2px 5px;
+      border-radius: 3px;
+      transform: rotate(-4deg);
+    }
+
+    .close-modal-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #8c765c;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 4vw, 1.35rem);
+      color: var(--navy-deep);
+      margin: 12px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-body-box {
+      font-family: var(--font-mono);
+      font-size: clamp(0.78rem, 2.8vw, 0.86rem);
+      line-height: 1.45;
+      color: var(--navy-deep);
+      background: #f3ebdE;
+      border: 1px dashed #d5c4ad;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+      min-height: 70px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: left;
+    }
+
+    .modal-btn-action {
+      background: var(--navy-primary);
+      color: #ffffff;
+      border: none;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .checklist-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      text-align: left;
+    }
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--navy-deep);
+      cursor: pointer;
+    }
+    .checklist-item input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--navy-primary);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Foto Realista da Praia do Guarujá no Fundo -->
+  <div class="scenic-bg-layer"></div>
+
+  <!-- Canvas Three.js Transparente -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Botão Flutuante Mobile -->
+  <div class="ux-hint-overlay" id="uxHintOverlay">
+    <button class="ux-pill-badge" onclick="trigger3DOpenFromButton()">
+      Acessar Backstage Pass VIP
+    </button>
+  </div>
+
+  <!-- Dashboard do Boarding Pass VIP -->
+  <main class="dashboard-viewport">
+    <article class="boarding-pass-card" id="boardingPassCard">
+      
+      <!-- Topo do Bilhete -->
+      <header class="ticket-header-strip">
+        <div class="ticket-brand">
+          <span class="brand-title">BACKSTAGE PASS • VIP</span>
+          <span class="brand-sub">WHERE WE ARE TOUR • JULIA 25</span>
+        </div>
+        <div class="ticket-class-badge">
+          FIRST CLASS
+        </div>
+      </header>
+
+      <!-- Corpo Principal -->
+      <div class="ticket-body">
+        
+        <!-- Rota de Voo/Viagem: PEDERNEIRAS -> GUARUJÁ -->
+        <div class="route-banner">
+          <div class="route-point">
+            <span class="route-code">1D</span>
+            <span class="route-city">Casa</span>
+          </div>
+
+          <div class="route-arrow-box">
+            <span class="flight-num">WWA-2511</span>
+            <div class="route-line"></div>
+          </div>
+
+          <div class="route-point" style="text-align: right;">
+            <span class="route-code">JUL</span>
+            <span class="route-city">Pizza Hut</span>
+          </div>
+        </div>
+
+        <!-- Dados do Passageiro -->
+        <div class="passenger-grid">
+          <div class="data-item">
+            <span class="data-label">Passageiro / Convocado</span>
+            <span class="data-value">Directioner VIP</span>
+          </div>
+
+          <div class="data-item">
+            <span class="data-label">Status</span>
+            <span class="data-value highlight">Confirmado</span>
+          </div>
+
+          <div class="data-item">
+            <span class="data-label">Embarque Oficial</span>
+            <span class="data-value">26/11/2026 • 19:00</span>
+          </div>
+
+          <div class="data-item">
+            <span class="data-label">Origem ➔ Destino</span>
+            <span class="data-value">Casa ➔ Pizza Hut</span>
+          </div>
+        </div>
+
+        <!-- Telegrama / Mensagem de Bordo -->
+        <div class="dispatch-strip">
+          <div class="dispatch-text" id="telegramText">
+            Live while we're young — pizza e refrão alto
+          </div>
+        </div>
+
+        <!-- Cronômetro Integrado -->
+        <section class="countdown-section" aria-label="Tempo para Decolagem">
+          <div class="countdown-header-row">
+            <span class="section-tag">Tempo Restante Para o Show</span>
+          </div>
+
+          <div class="countdown-grid">
+            <div class="timer-card" id="cardDays" onclick="pulseCard('cardDays')">
+              <span class="timer-digits" id="days">00</span>
+              <span class="timer-label">Dias</span>
+            </div>
+
+            <div class="timer-card" id="cardHours" onclick="pulseCard('cardHours')">
+              <span class="timer-digits" id="hours">00</span>
+              <span class="timer-label">Horas</span>
+            </div>
+
+            <div class="timer-card" id="cardMins" onclick="pulseCard('cardMins')">
+              <span class="timer-digits" id="mins">00</span>
+              <span class="timer-label">Minutos</span>
+            </div>
+
+            <div class="timer-card" id="cardSecs" onclick="pulseCard('cardSecs')">
+              <span class="timer-digits" id="secs">00</span>
+              <span class="timer-label">Segundos</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Picote / Tear Line -->
+      <div class="ticket-tear-line">
+        <div class="tear-dashed"></div>
+      </div>
+
+      <!-- Canhoto de Serviços / Ações -->
+      <div class="ticket-stub">
+        <div class="interactive-grid">
+          <div class="editorial-btn" onclick="openModal('rh')">
+            <span class="btn-title">Desculpa RH</span>
+            <span class="btn-sub">Atestado da tour</span>
+          </div>
+
+          <div class="editorial-btn" onclick="openModal('roles')">
+            <span class="btn-title">Seu Papel</span>
+            <span class="btn-sub">Na mesa da Julia</span>
+          </div>
+
+          <div class="editorial-btn" onclick="openModal('checklist')">
+            <span class="btn-title">Checklist</span>
+            <span class="btn-sub">Kit Directioner</span>
+          </div>
+
+          <div class="editorial-btn" onclick="openModal('playlist')">
+            <span class="btn-title">Setlist 1D</span>
+            <span class="btn-sub">What a Feeling • Spotify</span>
+          </div>
+        </div>
+
+        <button class="btn-panic-coastal" id="panicButton" onclick="triggerPanicParty()">
+          Abre o show agora
+        </button>
+
+        <footer class="ticket-footer-row">
+          <span class="footer-route-stamp">1D ➔ JUL • 26.NOV.2026</span>
+
+          <button class="control-pill-btn" onclick="closeLetterBackToEnvelope3D()">
+            Guardar
+          </button>
+        </footer>
+      </div>
+
+    </article>
+  </main>
+
+  <!-- MODAL INTERATIVO -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModalDirect(event)">
+    <div class="modal-card" id="modalCard" onclick="event.stopPropagation()">
+      <div class="modal-stamp-corner" id="modalStamp">OFICIAL</div>
+      <button class="close-modal-btn" onclick="closeModalForce()">&times;</button>
+      
+      <h2 class="modal-title" id="modalTitle">Título</h2>
+      
+      <div class="modal-body-box" id="modalBody">
+        Conteúdo aqui...
+      </div>
+
+      <button class="modal-btn-action" id="modalActionBtn" onclick="handleModalAction()">
+        Sortear Outro
+      </button>
+    </div>
+  </div>
+
+  <!-- ÁUDIO DE FUNDO -->
+  <audio id="bgMusic" src="what-a-feeling.mp3" loop preload="auto"></audio>
+
+  <!-- ==========================================================
+       JAVASCRIPT: THREE.JS TRANSPARENTE & ANIMAÇÃO SUAVE
+       ========================================================== -->
+  <script>
+    /* ==========================================================
+       1. DATA ALVO: 26 DE NOVEMBRO ÀS 19:00
+       ========================================================== */
+    let targetDate = new Date(2026, 10, 26, 19, 0, 0);
+
+    /* ==========================================================
+       2. WEB AUDIO API SYNTHESIZER & MÚSICA DE FUNDO
+       ========================================================== */
+    let audioEnabled = true;
+    let audioCtx = null;
+    let bgMusicEl = null;
+    let wasBgMusicPlaying = false;
+
+    function playBgMusic() {
+      if (currentModalType === 'playlist') return;
+      if (!audioEnabled) return;
+      if (!bgMusicEl) {
+        bgMusicEl = document.getElementById('bgMusic');
+      }
+      if (bgMusicEl) {
+        bgMusicEl.volume = 0.45;
+        if (bgMusicEl.paused) {
+          const playPromise = bgMusicEl.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+          }
+        }
+      }
+    }
+
+    function pauseBgMusic() {
+      if (!bgMusicEl) {
+        bgMusicEl = document.getElementById('bgMusic');
+      }
+      if (bgMusicEl && !bgMusicEl.paused) {
+        wasBgMusicPlaying = true;
+        bgMusicEl.pause();
+      }
+    }
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        const ctx = initAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === 'seal_break') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(340, now);
+          osc.frequency.exponentialRampToValueAtTime(70, now + 0.12);
+          gain.gain.setValueAtTime(0.38, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+
+        } else if (type === 'card_slide') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(260, now);
+          osc.frequency.linearRampToValueAtTime(540, now + 0.25);
+          osc.frequency.linearRampToValueAtTime(180, now + 0.5);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0.22, now + 0.25);
+          gain.gain.linearRampToValueAtTime(0.001, now + 0.55);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.58);
+
+        } else if (type === 'tap') {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(650, now);
+          osc.frequency.exponentialRampToValueAtTime(220, now + 0.06);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.08);
+
+        } else if (type === 'fanfare') {
+          const chord = [523.25, 659.25, 783.99, 1046.50];
+          chord.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + (idx * 0.07));
+            gain.gain.setValueAtTime(0.2, now + (idx * 0.07));
+            gain.gain.exponentialRampToValueAtTime(0.001, now + (idx * 0.07) + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + (idx * 0.07));
+            osc.stop(now + (idx * 0.07) + 0.38);
+          });
+        }
+      } catch (e) {
+        console.warn('Web Audio API:', e);
+      }
+    }
+
+    function toggleAudioMode() {
+      audioEnabled = !audioEnabled;
+      const el = document.getElementById('audioStatus');
+      if (el) el.innerText = audioEnabled ? 'Áudio: Ligado' : 'Áudio: Mudo';
+      if (audioEnabled) playSound('tap');
+    }
+
+    /* ==========================================================
+       3. TEXTURAS PROCEDURAIS CANVAS HD
+       ========================================================== */
+    // Frente do Envelope Kraft (Origem: Pederneiras - SP)
+    function createCleanFrontTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 680;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(512, 340, 100, 512, 340, 600);
+      grad.addColorStop(0, '#ebd7bf');
+      grad.addColorStop(0.7, '#dfc5a6');
+      grad.addColorStop(1, '#cbac89');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 680);
+
+      ctx.fillStyle = 'rgba(80, 50, 20, 0.035)';
+      for (let i = 0; i < 15000; i++) {
+        const rx = Math.random() * 1024;
+        const ry = Math.random() * 680;
+        ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
+      }
+
+      // Borda Airmail
+      const stripeW = 28;
+      for (let i = -2; i < 40; i++) {
+        ctx.fillStyle = i % 2 === 0 ? '#a82c20' : '#143852';
+        ctx.beginPath();
+        ctx.moveTo(i * stripeW, 0);
+        ctx.lineTo((i + 1) * stripeW, 0);
+        ctx.lineTo((i + 1) * stripeW - 14, 18);
+        ctx.lineTo(i * stripeW - 14, 18);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(i * stripeW, 680);
+        ctx.lineTo((i + 1) * stripeW, 680);
+        ctx.lineTo((i + 1) * stripeW + 14, 662);
+        ctx.lineTo(i * stripeW + 14, 662);
+        ctx.fill();
+      }
+
+      // Selo Postal
+      ctx.save();
+      ctx.translate(850, 150);
+      ctx.rotate(0.05);
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      ctx.fillStyle = '#f8f4ea';
+      ctx.fillRect(-85, -110, 170, 220);
+      ctx.shadowColor = 'transparent';
+
+      ctx.strokeStyle = '#b82b1c';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(-76, -101, 152, 202);
+
+      const stampGrad = ctx.createLinearGradient(0, -90, 0, 40);
+      stampGrad.addColorStop(0, '#c75338');
+      stampGrad.addColorStop(0.6, '#f39c58');
+      stampGrad.addColorStop(1, '#1a435d');
+      ctx.fillStyle = stampGrad;
+      ctx.fillRect(-70, -95, 140, 130);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-10, -40);
+      ctx.lineTo(15, -40);
+      ctx.lineTo(5, -75);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#1c120a';
+      ctx.fillRect(-15, -38, 35, 6);
+
+      ctx.fillStyle = '#b82b1c';
+      ctx.font = '900 16px "Cinzel", serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('1D • 2026', 0, 60);
+      ctx.font = 'bold 22px "Outfit", sans-serif';
+      ctx.fillText('JULIA 25', 0, 84);
+      ctx.font = 'bold 12px "Courier Prime", monospace';
+      ctx.fillStyle = '#143852';
+      ctx.fillText('JULIA 25', 0, 100);
+      ctx.restore();
+
+      // Carimbo
+      ctx.save();
+      ctx.translate(720, 140);
+      ctx.rotate(-0.06);
+      ctx.strokeStyle = 'rgba(20, 40, 60, 0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 52, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(0, 0, 46, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(20, 40, 60, 0.85)';
+      ctx.font = 'bold 13px "Courier Prime", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('CORREIOS • SP', 0, -18);
+      ctx.font = '900 16px "Outfit", sans-serif';
+      ctx.fillText('26.NOV.2026', 0, 4);
+      ctx.font = 'bold 11px "Courier Prime", monospace';
+      ctx.fillText('1D ➔ PIZZA HUT', 0, 22);
+
+      for (let y = -25; y <= 25; y += 12) {
+        ctx.beginPath();
+        ctx.moveTo(55, y);
+        ctx.bezierCurveTo(90, y - 8, 120, y + 8, 160, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Carimbo Prioritário
+      ctx.save();
+      ctx.translate(140, 120);
+      ctx.rotate(-0.08);
+      ctx.strokeStyle = 'rgba(184, 43, 28, 0.75)';
+      ctx.lineWidth = 3.5;
+      ctx.strokeRect(-70, -25, 140, 50);
+      ctx.fillStyle = 'rgba(184, 43, 28, 0.85)';
+      ctx.font = '900 16px "Outfit", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PRIORITÁRIO', 0, -3);
+      ctx.font = 'bold 11px "Courier Prime", monospace';
+      ctx.fillText('FIRST CLASS', 0, 14);
+      ctx.restore();
+
+      // Destinatário
+      ctx.fillStyle = '#091b2b';
+      ctx.font = '900 38px "Cinzel", serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('CONVOCAÇÃO OFICIAL', 90, 440);
+
+      ctx.strokeStyle = 'rgba(18, 52, 77, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(90, 455);
+      ctx.lineTo(540, 455);
+      ctx.stroke();
+
+      ctx.font = 'italic 28px "Playfair Display", serif';
+      ctx.fillStyle = '#1c2834';
+      ctx.fillText('Aos Cuidados da Julia', 90, 500);
+
+      ctx.font = 'bold 22px "Outfit", sans-serif';
+      ctx.fillStyle = '#a82c20';
+      ctx.fillText('Origem: Casa', 90, 545);
+
+      ctx.font = 'bold 22px "Outfit", sans-serif';
+      ctx.fillStyle = '#143852';
+      ctx.fillText('Destino: Pizza Hut • Deodoro, 531', 90, 580);
+
+      ctx.font = '16px "Courier Prime", monospace';
+      ctx.fillStyle = '#66533f';
+      ctx.fillText('Embarque: 26/11/2026 às 19:00', 90, 615);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Verso do Envelope Kraft
+    function createCleanBackTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 680;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createRadialGradient(512, 340, 100, 512, 340, 600);
+      grad.addColorStop(0, '#ebd7bf');
+      grad.addColorStop(0.7, '#dfc5a6');
+      grad.addColorStop(1, '#cbac89');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 680);
+
+      ctx.fillStyle = 'rgba(80, 50, 20, 0.035)';
+      for (let i = 0; i < 15000; i++) {
+        const rx = Math.random() * 1024;
+        const ry = Math.random() * 680;
+        ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
+      }
+
+      // Cavidade interna
+      const pocketGrad = ctx.createLinearGradient(0, 0, 0, 360);
+      pocketGrad.addColorStop(0, '#8c6b4d');
+      pocketGrad.addColorStop(0.5, '#9e7b59');
+      pocketGrad.addColorStop(1, '#b8946e');
+      ctx.fillStyle = pocketGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(1024, 0);
+      ctx.lineTo(512, 340);
+      ctx.closePath();
+      ctx.fill();
+
+      // Dobra Inferior
+      ctx.save();
+      ctx.shadowColor = 'rgba(50, 30, 10, 0.45)';
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = -5;
+      ctx.fillStyle = '#dbc0a2';
+      ctx.beginPath();
+      ctx.moveTo(0, 680);
+      ctx.lineTo(512, 320);
+      ctx.lineTo(1024, 680);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      ctx.strokeStyle = 'rgba(70, 40, 15, 0.55)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 680);
+      ctx.lineTo(512, 320);
+      ctx.lineTo(1024, 680);
+      ctx.stroke();
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Aba Superior Kraft
+    function createCleanFlapTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 0, 512);
+      grad.addColorStop(0, '#ebd8bf');
+      grad.addColorStop(0.6, '#dfc4a5');
+      grad.addColorStop(1, '#d5b597');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 512);
+
+      ctx.fillStyle = 'rgba(80, 50, 20, 0.04)';
+      for (let i = 0; i < 6000; i++) {
+        const rx = Math.random() * 1024;
+        const ry = Math.random() * 512;
+        ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
+      }
+
+      ctx.strokeStyle = 'rgba(60, 30, 10, 0.65)';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(512, 512);
+      ctx.lineTo(1024, 0);
+      ctx.stroke();
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Madeira da Mesa
+    function createHorizontalWoodTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+      grad.addColorStop(0, '#1c120a');
+      grad.addColorStop(0.3, '#2b1c10');
+      grad.addColorStop(0.7, '#24170d');
+      grad.addColorStop(1, '#180f08');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.lineWidth = 6;
+      for (let y = 0; y < 1024; y += 140) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(1024, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.035)';
+      for (let i = 0; i < 20000; i++) {
+        const x = Math.random() * 1024;
+        const y = Math.random() * 1024;
+        ctx.fillRect(x, y, Math.random() * 50 + 10, 1.5);
+      }
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    /* ==========================================================
+       4. CENA 3D THREE.JS (ENVELOPE + MESA COM CANV AS TRANSPARENTE)
+       ========================================================== */
+    let scene, camera, renderer;
+    let envelopeGroup, topFlapPivot, waxSealGroup, tableMesh;
+    let is3DOpened = false;
+    let isDragging = false;
+    let previousPointerPosition = { x: 0, y: 0 };
+    let envelopeRotationVelocity = { x: 0, y: 0 };
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    const ENV_THICKNESS = 0.12;
+    const TABLE_Y_LEVEL = -2.2;
+
+    function initThreeScene() {
+      const canvas = document.getElementById('webgl-canvas');
+      if (!canvas) return;
+
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x000000, 0); // Permite ver a foto de fundo CSS em total nitidez
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      scene = new THREE.Scene();
+
+      const aspect = window.innerWidth / window.innerHeight;
+      const initZ = aspect < 0.7 ? 10.0 : (aspect < 1 ? 9.0 : 8.2);
+
+      camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 100);
+      camera.position.set(0, 0.6, initZ);
+      camera.lookAt(0, -0.2, 0);
+
+      // Luzes
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambientLight);
+
+      const sunDirectional = new THREE.DirectionalLight(0xfffaed, 0.85);
+      sunDirectional.position.set(3, 6, 4);
+      sunDirectional.castShadow = true;
+      sunDirectional.shadow.mapSize.width = 2048;
+      sunDirectional.shadow.mapSize.height = 2048;
+      sunDirectional.shadow.bias = -0.0004;
+      scene.add(sunDirectional);
+
+      const fillLight = new THREE.DirectionalLight(0xbde0fe, 0.3);
+      fillLight.position.set(-3, 2, 4);
+      scene.add(fillLight);
+
+      // Mesa de Madeira
+      const tableGeo = new THREE.PlaneGeometry(40, 20);
+      const tableTex = createHorizontalWoodTexture();
+      tableTex.wrapS = THREE.RepeatWrapping;
+      tableTex.wrapT = THREE.RepeatWrapping;
+      tableTex.repeat.set(3, 2);
+
+      const tableMat = new THREE.MeshStandardMaterial({
+        map: tableTex,
+        roughness: 0.7,
+        metalness: 0.1
+      });
+      tableMesh = new THREE.Mesh(tableGeo, tableMat);
+      tableMesh.rotation.x = -Math.PI / 2;
+      tableMesh.position.set(0, TABLE_Y_LEVEL, 2);
+      tableMesh.receiveShadow = true;
+      scene.add(tableMesh);
+
+      // Envelope 3D Kraft
+      envelopeGroup = new THREE.Group();
+      envelopeGroup.position.set(0, 0.15, 0);
+      scene.add(envelopeGroup);
+
+      const envW = 4.4;
+      const envH = 2.9;
+      const envD = ENV_THICKNESS;
+
+      const frontTex = createCleanFrontTexture();
+      const backTex = createCleanBackTexture();
+      const sideMat = new THREE.MeshStandardMaterial({ color: 0xcfac8a, roughness: 0.7 });
+
+      const envMaterials = [
+        sideMat, sideMat, sideMat, sideMat,
+        new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.65 }),
+        new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.65 })
+      ];
+
+      const bodyGeo = new THREE.BoxGeometry(envW, envH, envD);
+      const bodyMesh = new THREE.Mesh(bodyGeo, envMaterials);
+      bodyMesh.castShadow = true;
+      bodyMesh.receiveShadow = true;
+      envelopeGroup.add(bodyMesh);
+
+      // Aba Superior
+      topFlapPivot = new THREE.Group();
+      topFlapPivot.position.set(0, envH / 2, envD / 2 + 0.008);
+      envelopeGroup.add(topFlapPivot);
+
+      const flapGeo = new THREE.BufferGeometry();
+      const halfW = envW / 2;
+      const flapTipY = -envH * 0.58;
+
+      const flapPositions = new Float32Array([
+        -halfW, 0, 0, 0, flapTipY, 0, halfW, 0, 0,
+        halfW, 0, -0.001, 0, flapTipY, -0.001, -halfW, 0, -0.001
+      ]);
+      const flapUvs = new Float32Array([
+        0.0, 1.0, 0.5, 0.0, 1.0, 1.0,
+        1.0, 1.0, 0.5, 0.0, 0.0, 1.0
+      ]);
+      const flapNormals = new Float32Array([
+        0, 0, 1, 0, 0, 1, 0, 0, 1,
+        0, 0, -1, 0, 0, -1, 0, 0, -1
+      ]);
+
+      flapGeo.setAttribute('position', new THREE.BufferAttribute(flapPositions, 3));
+      flapGeo.setAttribute('uv', new THREE.BufferAttribute(flapUvs, 2));
+      flapGeo.setAttribute('normal', new THREE.BufferAttribute(flapNormals, 3));
+
+      const flapMat = new THREE.MeshStandardMaterial({
+        map: createCleanFlapTexture(),
+        roughness: 0.65,
+        side: THREE.FrontSide
+      });
+      const flapMesh = new THREE.Mesh(flapGeo, flapMat);
+      flapMesh.castShadow = true;
+      topFlapPivot.add(flapMesh);
+
+      // Selo de Cera 3D Real
+      waxSealGroup = new THREE.Group();
+      waxSealGroup.position.set(0, -envH * 0.54, 0.05);
+
+      const waxMaterial = new THREE.MeshStandardMaterial({
+        color: 0x7a1212,
+        roughness: 0.18,
+        metalness: 0.08
+      });
+
+      const waxBaseGeo = new THREE.CylinderGeometry(0.5, 0.56, 0.07, 32);
+      const waxBaseMesh = new THREE.Mesh(waxBaseGeo, waxMaterial);
+      waxBaseMesh.rotation.x = Math.PI / 2;
+      waxBaseMesh.castShadow = true;
+      waxSealGroup.add(waxBaseMesh);
+
+      const waxRingGeo = new THREE.TorusGeometry(0.35, 0.055, 16, 32);
+      const waxRingMesh = new THREE.Mesh(waxRingGeo, waxMaterial);
+      waxRingMesh.position.set(0, 0, 0.04);
+      waxRingMesh.castShadow = true;
+      waxSealGroup.add(waxRingMesh);
+
+      const waxCenterGeo = new THREE.CylinderGeometry(0.33, 0.33, 0.03, 32);
+      const waxCenterMesh = new THREE.Mesh(waxCenterGeo, waxMaterial);
+      waxCenterMesh.rotation.x = Math.PI / 2;
+      waxCenterMesh.position.set(0, 0, 0.025);
+      waxSealGroup.add(waxCenterMesh);
+
+      topFlapPivot.add(waxSealGroup);
+
+      setup3DInteractions(canvas);
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function setup3DInteractions(canvas) {
+      let isPointerDown = false;
+      let startX = 0, startY = 0;
+      let hasDragged = false;
+
+      function onPointerDown(e) {
+        if (is3DOpened) return;
+        isPointerDown = true;
+        hasDragged = false;
+        isDragging = true;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        startX = clientX;
+        startY = clientY;
+        previousPointerPosition = { x: clientX, y: clientY };
+      }
+
+      function onPointerMove(e) {
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+        if (!isPointerDown || is3DOpened) return;
+
+        const deltaX = clientX - previousPointerPosition.x;
+        const deltaY = clientY - previousPointerPosition.y;
+
+        if (Math.abs(clientX - startX) > 5 || Math.abs(clientY - startY) > 5) {
+          hasDragged = true;
+        }
+
+        envelopeRotationVelocity.y = deltaX * 0.007;
+        envelopeRotationVelocity.x = deltaY * 0.007;
+
+        envelopeGroup.rotation.y += envelopeRotationVelocity.y;
+        envelopeGroup.rotation.x += envelopeRotationVelocity.x;
+
+        previousPointerPosition = { x: clientX, y: clientY };
+      }
+
+      function onPointerUp(e) {
+        isPointerDown = false;
+        isDragging = false;
+
+        if (!hasDragged && !is3DOpened) {
+          raycaster.setFromCamera(mouse, camera);
+          const intersects = raycaster.intersectObjects(envelopeGroup.children, true);
+          if (intersects.length > 0) {
+            triggerGrand3DOpening();
+          }
+        }
+      }
+
+      canvas.addEventListener('mousedown', onPointerDown);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+
+      canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+      window.addEventListener('touchmove', onPointerMove, { passive: true });
+      window.addEventListener('touchend', onPointerUp);
+    }
+
+    function onWindowResize() {
+      if (!camera || !renderer) return;
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = aspect;
+      camera.position.z = aspect < 0.7 ? 10.0 : (aspect < 1 ? 9.0 : 8.2);
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    /* ==========================================================
+       5. CORE: POUSO & SLIDE-OUT SUAVE DO BOARDING PASS
+       ========================================================= */
+    function trigger3DOpenFromButton() {
+      if (!is3DOpened) {
+        triggerGrand3DOpening();
+      }
+    }
+
+    function triggerGrand3DOpening() {
+      if (is3DOpened) return;
+      is3DOpened = true;
+
+      initAudioContext();
+      playBgMusic();
+      playSound('seal_break');
+
+      const hint = document.getElementById('uxHintOverlay');
+      if (hint) {
+        hint.style.opacity = '0';
+        hint.style.transform = 'translateX(-50%) translateY(20px)';
+      }
+
+      const passCard = document.getElementById('boardingPassCard');
+
+      // 1. Envelope pousa paralelo na mesa
+      anime({
+        targets: envelopeGroup.rotation,
+        x: -Math.PI / 2,
+        y: 0,
+        z: -0.2,
+        duration: 650,
+        easing: 'easeInOutCubic'
+      });
+
+      anime({
+        targets: envelopeGroup.position,
+        x: 0.15,
+        y: TABLE_Y_LEVEL + (ENV_THICKNESS / 2) + 0.015,
+        z: 1.1,
+        duration: 650,
+        easing: 'easeInOutCubic'
+      });
+
+      // 2. Rompe o selo 3D
+      anime({
+        targets: waxSealGroup.scale,
+        x: 0,
+        y: 0,
+        z: 0,
+        duration: 350,
+        easing: 'easeInBack'
+      });
+
+      // 3. Aba abre para trás sobre a mesa
+      anime({
+        targets: topFlapPivot.rotation,
+        x: -Math.PI * 0.96,
+        duration: 650,
+        delay: 200,
+        easing: 'easeInOutCubic'
+      });
+
+      // 4. O Boarding Pass desliza suavemente para fora do envelope
+      setTimeout(() => {
+        playSound('card_slide');
+
+        if (typeof confetti !== 'undefined') {
+          confetti({
+            particleCount: 80,
+            spread: 75,
+            origin: { y: 0.6 },
+            colors: ['#c49a45', '#12344d', '#a8281a', '#ffffff']
+          });
+        }
+
+        if (passCard) passCard.classList.add('visible');
+
+        // Animação de fade suave dos blocos sem expandir altura
+        anime({
+          targets: ['.ticket-header-strip', '.route-banner', '.passenger-grid', '.dispatch-strip', '.countdown-section', '.ticket-stub'],
+          opacity: [0, 1],
+          scale: [0.97, 1],
+          delay: anime.stagger(40),
+          duration: 450,
+          easing: 'easeOutQuad'
+        });
+
+      }, 450);
+    }
+
+    // FECHAMENTO REVERSO SUAVE
+    function closeLetterBackToEnvelope3D() {
+      playSound('card_slide');
+      const passCard = document.getElementById('boardingPassCard');
+      const hint = document.getElementById('uxHintOverlay');
+
+      if (passCard) passCard.classList.remove('visible');
+
+      setTimeout(() => {
+        // Fecha aba do envelope
+        anime({
+          targets: topFlapPivot.rotation,
+          x: 0,
+          duration: 550,
+          easing: 'easeInOutCubic'
+        });
+
+        // Selo 3D reaparece
+        anime({
+          targets: waxSealGroup.scale,
+          x: 1,
+          y: 1,
+          z: 1,
+          duration: 400,
+          delay: 350,
+          easing: 'easeOutBack'
+        });
+
+        // Envelope flutua de volta
+        anime({
+          targets: envelopeGroup.position,
+          x: 0,
+          y: 0.15,
+          z: 0,
+          duration: 700,
+          delay: 500,
+          easing: 'easeOutBack'
+        });
+
+        anime({
+          targets: envelopeGroup.rotation,
+          x: 0,
+          y: 0,
+          z: 0,
+          duration: 700,
+          delay: 500,
+          easing: 'easeOutBack',
+          complete: () => {
+            is3DOpened = false;
+            if (hint) {
+              hint.style.opacity = '1';
+              hint.style.transform = 'translateX(-50%) translateY(0)';
+            }
+          }
+        });
+
+      }, 350);
+    }
+
+    /* ==========================================================
+       6. RENDER LOOP THREE.JS
+       ========================================================== */
+    let clock = new THREE.Clock();
+
+    function animateThreeScene() {
+      requestAnimationFrame(animateThreeScene);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      if (!is3DOpened && envelopeGroup) {
+        if (!isDragging) {
+          envelopeRotationVelocity.x *= 0.92;
+          envelopeRotationVelocity.y *= 0.92;
+
+          envelopeGroup.rotation.x += envelopeRotationVelocity.x;
+          envelopeGroup.rotation.y += envelopeRotationVelocity.y;
+
+          envelopeGroup.position.y = 0.15 + Math.sin(elapsedTime * 1.8) * 0.08;
+          envelopeGroup.rotation.z = Math.sin(elapsedTime * 1.2) * 0.015;
+        }
+      }
+
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    }
+
+    /* ==========================================================
+       7. CONTAGEM REGRESSIVA CONTÍNUA
+       ========================================================== */
+    let lastSec = -1;
+    let lastMin = -1;
+    let lastHour = -1;
+    let lastDay = -1;
+
+    function updateCountdown() {
+      const now = new Date().getTime();
+      const diff = targetDate.getTime() - now;
+
+      const daysEl = document.getElementById('days');
+      const hoursEl = document.getElementById('hours');
+      const minsEl = document.getElementById('mins');
+      const secsEl = document.getElementById('secs');
+
+      if (!daysEl || !hoursEl || !minsEl || !secsEl) return;
+
+      if (diff <= 0) {
+        daysEl.innerText = "00";
+        hoursEl.innerText = "00";
+        minsEl.innerText = "00";
+        secsEl.innerText = "00";
+        const telegramEl = document.getElementById('telegramText');
+        if (telegramEl) telegramEl.innerText = "PORTÃO ABERTO! SHOW DA JULIA NO PIZZA HUT!";
+        return;
+      }
+
+      const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      if (d !== lastDay) {
+        daysEl.innerText = String(d).padStart(2, '0');
+        animateDigitFlip('cardDays');
+        lastDay = d;
+      }
+      if (h !== lastHour) {
+        hoursEl.innerText = String(h).padStart(2, '0');
+        animateDigitFlip('cardHours');
+        lastHour = h;
+      }
+      if (m !== lastMin) {
+        minsEl.innerText = String(m).padStart(2, '0');
+        animateDigitFlip('cardMins');
+        lastMin = m;
+      }
+      if (s !== lastSec) {
+        secsEl.innerText = String(s).padStart(2, '0');
+        animateDigitPulse('cardSecs');
+        lastSec = s;
+      }
+    }
+
+    function animateDigitFlip(elementId) {
+      if (typeof anime === 'undefined') return;
+      anime({
+        targets: `#${elementId} .timer-digits`,
+        scale: [0.75, 1.15, 1],
+        rotateX: [-60, 0],
+        duration: 450,
+        easing: 'easeOutBack'
+      });
+    }
+
+    function animateDigitPulse(elementId) {
+      if (typeof anime === 'undefined') return;
+      anime({
+        targets: `#${elementId} .timer-digits`,
+        scale: [1, 1.08, 1],
+        duration: 300,
+        easing: 'easeInOutQuad'
+      });
+    }
+
+    function pulseCard(cardId) {
+      playSound('tap');
+      if (typeof anime === 'undefined') return;
+      anime({
+        targets: `#${cardId}`,
+        scale: [1, 1.14, 1],
+        duration: 350,
+        easing: 'easeOutBack'
+      });
+    }
+
+    /* ==========================================================
+       8. TELEGRAMAS / AVISOS DE BORDO
+       ========================================================== */
+    const telegramMessages = [
+      "DECRETO: Live while we're young — pizza e refrão alto",
+      "STATUS: Directioner confirmada na Where We Are Tour",
+      "AVISO: All-stars e glitter no dress code",
+      "METAS: Zero reunião, 100% What a Feeling",
+      "ALERTA: Portões 19h · Pizza Hut · Deodoro da Fonseca, 531",
+      "DIÁRIO: Contando os segundos pro bolo da Julia",
+      "URGENTE: Story of my life começa quando ela soprar a vela"
+    ];
+
+    let telegramIdx = 0;
+    function rotateTelegram() {
+      const el = document.getElementById('telegramText');
+      if (!el) return;
+      telegramIdx = (telegramIdx + 1) % telegramMessages.length;
+
+      if (typeof anime !== 'undefined') {
+        anime({
+          targets: el,
+          opacity: [1, 0],
+          translateY: [0, -6],
+          duration: 300,
+          easing: 'easeInQuad',
+          complete: () => {
+            el.innerText = telegramMessages[telegramIdx];
+            anime({
+              targets: el,
+              opacity: [0, 1],
+              translateY: [6, 0],
+              duration: 400,
+              easing: 'easeOutQuad'
+            });
+          }
+        });
+      } else {
+        el.innerText = telegramMessages[telegramIdx];
+      }
+    }
+
+    /* ==========================================================
+       9. MODAIS INTERATIVOS
+       ========================================================== */
+    let currentModalType = 'rh';
+
+    const rhExcuses = [
+      {
+        title: "Ofício de Ausência 1D",
+        text: "“A partir de 26/11 às 19h estarei em função oficial na Where We Are Tour. E-mails voltam quando acabar What a Feeling.”"
+      },
+      {
+        title: "Atestado de Boyband Aguda",
+        text: "“A colaboradora apresenta sintomas de refrão grudento. Prescrição: Pizza Hut, all-stars e 25 anos da Julia.”"
+      },
+      {
+        title: "Notificação de Backstage",
+        text: "“Em caso de emergência no trabalho: coloque Best Song Ever e tente de novo amanhã.”"
+      }
+    ];
+
+    const groupRoles = [
+      { title: "Grita o Refrão", text: "Se a mesa não cantar What a Feeling inteiro, a culpa é sua. Volume no máximo." },
+      { title: "DJ da Mesa", text: "A fila do Spotify é sagrada. Ninguém pula Little Things." },
+      { title: "Fotógrafa Oficial", text: "Polaroid da pizza, da vela e do glitter. Sem isso não aconteceu." },
+      { title: "Come a Fatia da Julia", text: "Missão: garantir que a aniversariante coma antes de atender o Zap." },
+      { title: "Harmonizer de Plantão", text: "Sabe o nome dos cinco álbuns em ordem. Recita se alguém duvidar." }
+    ];
+
+    const checklistItems = [
+      { id: "c1", label: "All-stars (ou chuteira emocional)" },
+      { id: "c2", label: "Glitter no rostinho" },
+      { id: "c3", label: "Camiseta / vibe 1D" },
+      { id: "c4", label: "Voz para o refrão" },
+      { id: "c5", label: "Fome de Pizza Hut" },
+      { id: "c6", label: "Presente (ou um abraço bem 2012)" },
+      { id: "c7", label: "Zero pendências antes do show" }
+    ];
+
+    let rhIndex = 0;
+    let roleIndex = 0;
+
+    function openModal(type) {
+      playSound('tap');
+      currentModalType = type;
+      const overlay = document.getElementById('modalOverlay');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      const stamp = document.getElementById('modalStamp');
+      const actionBtn = document.getElementById('modalActionBtn');
+
+      if (!overlay) return;
+      if (body) {
+        body.style.padding = '';
+        body.style.marginBottom = '';
+      }
+      overlay.classList.add('active');
+
+      if (type === 'rh') {
+        if (stamp) stamp.innerText = "RH • APROVADO";
+        if (actionBtn) {
+          actionBtn.style.display = "block";
+          actionBtn.innerText = "Gerar Outra Desculpa";
+        }
+        renderRHModal();
+      } else if (type === 'roles') {
+        if (stamp) stamp.innerText = "CLASSIFICAÇÃO";
+        if (actionBtn) {
+          actionBtn.style.display = "block";
+          actionBtn.innerText = "Sortear Meu Papel";
+        }
+        renderRoleModal();
+      } else if (type === 'checklist') {
+        if (stamp) stamp.innerText = "BAGAGEM";
+        if (title) title.innerText = "Kit Directioner";
+        if (actionBtn) actionBtn.style.display = "none";
+        renderChecklistModal();
+      } else if (type === 'playlist') {
+        if (stamp) stamp.innerText = "SOM DA TOUR";
+        if (title) title.innerText = "Setlist Where We Are 🎧";
+        if (actionBtn) actionBtn.style.display = "none";
+        pauseBgMusic();
+        renderPlaylistModal();
+      }
+
+      if (typeof anime !== 'undefined') {
+        anime({
+          targets: '#modalCard',
+          scale: [0.8, 1],
+          opacity: [0, 1],
+          duration: 350,
+          easing: 'easeOutBack'
+        });
+      }
+    }
+
+    function renderRHModal() {
+      const data = rhExcuses[rhIndex];
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      if (title) title.innerText = data.title;
+      if (body) {
+        body.innerHTML = `
+          <p style="font-style: italic; color: #2c2014;">${data.text}</p>
+          <div style="margin-top: 12px; font-size: 0.75rem; color: #8a745b; font-weight: bold;">
+            Carimbado digitalmente pela Diretoria da Praia
+          </div>
+        `;
+      }
+    }
+
+    function renderRoleModal() {
+      const data = groupRoles[roleIndex];
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      if (title) title.innerText = data.title;
+      if (body) {
+        body.innerHTML = `
+          <p style="font-family: var(--font-sans); font-weight: 600; color: #2c2014; line-height: 1.4;">
+            ${data.text}
+          </p>
+        `;
+      }
+    }
+
+    function renderChecklistModal() {
+      const body = document.getElementById('modalBody');
+      if (!body) return;
+      let html = `<div class="checklist-list">`;
+      checklistItems.forEach(item => {
+        const checked = localStorage.getItem('gja_chk_' + item.id) === 'true' ? 'checked' : '';
+        html += `
+          <label class="checklist-item">
+            <input type="checkbox" ${checked} onchange="saveChecklist('${item.id}', this.checked)">
+            <span>${item.label}</span>
+          </label>
+        `;
+      });
+      html += `</div>`;
+      body.innerHTML = html;
+    }
+
+    function renderPlaylistModal() {
+      const body = document.getElementById('modalBody');
+      if (!body) return;
+      body.style.padding = '6px';
+      body.style.marginBottom = '4px';
+      body.innerHTML = `
+        <div onpointerdown="pauseBgMusic()" ontouchstart="pauseBgMusic()" style="border-radius: 12px; overflow: hidden; width: 100%; box-shadow: 0 4px 16px rgba(0,0,0,0.18); background: #121212;">
+          <iframe
+            style="border-radius:12px; display:block; border:none;"
+            src="https://open.spotify.com/embed/artist/4AK6F7OLvEQ5QYCBNiQWHq?utm_source=generator&theme=0"
+            width="100%"
+            height="352"
+            frameBorder="0"
+            allowfullscreen=""
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy">
+          </iframe>
+        </div>
+      `;
+    }
+
+    function saveChecklist(id, val) {
+      playSound('tap');
+      localStorage.setItem('gja_chk_' + id, val);
+    }
+
+    function handleModalAction() {
+      playSound('tap');
+      if (currentModalType === 'rh') {
+        rhIndex = (rhIndex + 1) % rhExcuses.length;
+        renderRHModal();
+      } else if (currentModalType === 'roles') {
+        roleIndex = (roleIndex + 1) % groupRoles.length;
+        renderRoleModal();
+      }
+    }
+
+    function closeModalForce() {
+      playSound('tap');
+      const overlay = document.getElementById('modalOverlay');
+      if (overlay) overlay.classList.remove('active');
+      const body = document.getElementById('modalBody');
+      const closingType = currentModalType;
+      currentModalType = null;
+
+      if (closingType === 'playlist') {
+        if (body) {
+          body.innerHTML = '';
+          body.style.padding = '';
+          body.style.marginBottom = '';
+        }
+        if (wasBgMusicPlaying && audioEnabled) {
+          playBgMusic();
+          wasBgMusicPlaying = false;
+        }
+      } else {
+        if (body) {
+          body.style.padding = '';
+          body.style.marginBottom = '';
+        }
+      }
+    }
+
+    function closeModalDirect(e) {
+      if (e.target.id === 'modalOverlay') {
+        closeModalForce();
+      }
+    }
+
+    /* ==========================================================
+       10. ALERTA DE FÉRIAS
+       ========================================================== */
+    function triggerPanicParty() {
+      playSound('fanfare');
+
+      if (typeof confetti !== 'undefined') {
+        const defaults = { origin: { y: 0.7 } };
+        confetti({
+          ...defaults,
+          particleCount: 80,
+          spread: 75,
+          origin: { x: 0.2, y: 0.6 },
+          colors: ['#c49a45', '#12344d', '#a8281a', '#ffffff']
+        });
+        confetti({
+          ...defaults,
+          particleCount: 80,
+          spread: 75,
+          origin: { x: 0.8, y: 0.6 },
+          colors: ['#c49a45', '#12344d', '#a8281a', '#ffffff']
+        });
+      }
+
+      if (typeof anime !== 'undefined') {
+        anime({
+          targets: '.timer-card',
+          translateY: [0, -12, 0],
+          scale: [1, 1.08, 1],
+          delay: anime.stagger(50),
+          duration: 500,
+          easing: 'easeOutBack'
+        });
+      }
+    }
+
+    /* ==========================================================
+       11. INICIALIZAÇÃO ROBUSTA DA APLICAÇÃO
+       ========================================================== */
+    function startApp() {
+      initThreeScene();
+      animateThreeScene();
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+      setInterval(rotateTelegram, 4800);
+      playBgMusic();
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      startApp();
+    } else {
+      document.addEventListener('DOMContentLoaded', startApp);
+    }
+
+    function ensureAudioPlayback() {
+      initAudioContext();
+      if (currentModalType !== 'playlist' && audioEnabled) {
+        playBgMusic();
+      }
+    }
+
+    ['click', 'touchstart', 'mousedown', 'pointerdown', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, ensureAudioPlayback, { passive: true });
+    });
+
+    window.addEventListener('blur', () => {
+      if (currentModalType === 'playlist') {
+        pauseBgMusic();
+      }
+    });
+  </script>
+</body>
+</html>

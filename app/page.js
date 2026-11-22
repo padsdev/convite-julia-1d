@@ -1,5 +1,5 @@
-import Invite from "./Invite";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <Invite />;
+  redirect("/convite.html");
 }
