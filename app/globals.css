@@ -246,16 +246,22 @@ body {
 .b-mute {
   grid-area: 2 / 1;
   justify-self: center;
+  position: relative;
+  z-index: 10;
   margin-top: 14px;
   min-height: 44px;
   padding: 0 14px;
   border: 1px solid #c9a227;
-  background: transparent;
+  background: #120e0c;
   color: #f6f1e7;
   font: 600 11px/1 var(--font-mono), monospace;
   letter-spacing: .16em;
   text-transform: uppercase;
   cursor: pointer;
+}
+.b-mute[aria-pressed="true"] {
+  border-color: #8b1e3f;
+  color: #c9a227;
 }
 
 @media (prefers-reduced-motion: reduce) {

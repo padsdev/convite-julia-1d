@@ -10,15 +10,19 @@ export default function Invite() {
   function openInvite() {
     if (open) return;
     setOpen(true);
-    audioRef.current?.play().catch(() => {});
-  }
-
-  function toggleMute() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) audio.play().catch(() => {});
-    else audio.pause();
-    setMuted(audio.paused);
+    audio.muted = false;
+    setMuted(false);
+    audio.play().catch(() => {});
+  }
+
+  function toggleMute(e) {
+    e.stopPropagation();
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.muted = !audio.muted;
+    setMuted(audio.muted);
   }
 
   return (
