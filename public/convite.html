@@ -1410,8 +1410,8 @@
 
       const envMaterials = [
         sideMat, sideMat, sideMat, sideMat,
-        new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.65 }),
-        new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.65 })
+        new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.65 }),
+        new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.65 })
       ];
 
       const bodyGeo = new THREE.BoxGeometry(envW, envH, envD);
