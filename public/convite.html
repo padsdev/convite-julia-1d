@@ -1227,40 +1227,35 @@
         ctx.fillRect(rx, ry, Math.random() * 3 + 1, 1);
       }
 
-      // Cavidade interna
-      const pocketGrad = ctx.createLinearGradient(0, 0, 0, 360);
-      pocketGrad.addColorStop(0, '#8c6b4d');
-      pocketGrad.addColorStop(0.5, '#9e7b59');
-      pocketGrad.addColorStop(1, '#b8946e');
-      ctx.fillStyle = pocketGrad;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(1024, 0);
-      ctx.lineTo(512, 340);
-      ctx.closePath();
-      ctx.fill();
-
-      // Dobra Inferior
       ctx.save();
-      ctx.shadowColor = 'rgba(50, 30, 10, 0.45)';
-      ctx.shadowBlur = 14;
-      ctx.shadowOffsetY = -5;
-      ctx.fillStyle = '#dbc0a2';
-      ctx.beginPath();
-      ctx.moveTo(0, 680);
-      ctx.lineTo(512, 320);
-      ctx.lineTo(1024, 680);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+      ctx.translate(512, 340);
+      ctx.rotate(-0.05);
 
-      ctx.strokeStyle = 'rgba(70, 40, 15, 0.55)';
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = 'rgba(20, 40, 60, 0.82)';
+      ctx.lineWidth = 6;
       ctx.beginPath();
-      ctx.moveTo(0, 680);
-      ctx.lineTo(512, 320);
-      ctx.lineTo(1024, 680);
+      ctx.arc(0, 0, 168, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 152, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(20, 40, 60, 0.88)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 18px "Cinzel", serif';
+      ctx.fillText('WHERE WE ARE TOUR', 0, -78);
+
+      ctx.fillStyle = '#8b1e3f';
+      ctx.font = '800 92px "Cinzel", serif';
+      ctx.fillText('1D', 0, 8);
+
+      ctx.fillStyle = 'rgba(20, 40, 60, 0.88)';
+      ctx.font = '800 22px "Cinzel", serif';
+      ctx.fillText('JULIA 25', 0, 88);
+
+      ctx.restore();
 
       return new THREE.CanvasTexture(canvas);
     }
