@@ -1259,11 +1259,11 @@
       scene.add(fillLight);
 
       // Mesa de Madeira
-      const tableGeo = new THREE.PlaneGeometry(40, 20);
+      const tableGeo = new THREE.PlaneGeometry(60, 40);
       const tableTex = createHorizontalWoodTexture();
       tableTex.wrapS = THREE.RepeatWrapping;
       tableTex.wrapT = THREE.RepeatWrapping;
-      tableTex.repeat.set(3, 2);
+      tableTex.repeat.set(4.5, 4);
 
       const tableMat = new THREE.MeshStandardMaterial({
         map: tableTex,
@@ -1272,7 +1272,7 @@
       });
       tableMesh = new THREE.Mesh(tableGeo, tableMat);
       tableMesh.rotation.x = -Math.PI / 2;
-      tableMesh.position.set(0, TABLE_Y_LEVEL, 2);
+      tableMesh.position.set(0, TABLE_Y_LEVEL, -5);
       tableMesh.receiveShadow = true;
       scene.add(tableMesh);
 
